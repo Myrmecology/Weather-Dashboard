@@ -45,10 +45,19 @@ const fetchWeather = async (cityName: string) => {
 
   const weatherData = await response.json();
 
-  console.log('weatherData: ', weatherData);
+  console.log('weatherData: ', weatherData); // Muestra los datos devueltos
 
-  renderCurrentWeather(weatherData[0]);
-  renderForecast(weatherData.slice(1));
+  // Verifica si weatherData tiene las propiedades correctas
+  if (
+    weatherData &&
+    weatherData.currentWeather &&
+    weatherData.forecastArray
+  ) {
+    renderCurrentWeather(weatherData.currentWeather); // Pasa el objeto currentWeather
+    renderForecast(weatherData.forecastArray); // Pasa el array forecastArray
+  } else {
+    console.error('Error: Invalid weather data format', weatherData);
+  }
 };
 
 const fetchSearchHistory = async () => {
@@ -80,7 +89,7 @@ const renderCurrentWeather = (currentWeather: any): void => {
   const { city, date, icon, iconDescription, tempF, windSpeed, humidity } =
     currentWeather;
 
-  // convert the following to typescript
+
   heading.textContent = `${city} (${date})`;
   weatherIcon.setAttribute(
     'src',
@@ -112,6 +121,7 @@ const renderForecast = (forecast: any): void => {
     forecastContainer.append(headingCol);
   }
 
+  // Asegúrate de iterar sobre el array forecast
   for (let i = 0; i < forecast.length; i++) {
     renderForecastCard(forecast[i]);
   }
