@@ -22,7 +22,9 @@ router.post('/', async (req, res) => {
       return res.status(500).send({ error: 'Unexpected error occurred' });
     }
   }
-
+  
+  // This part should be after the weather request is successfully handled.
+  // Save the city to search history (done only if weather data is fetched successfully).
   try {
     // Save the city to search history
     await HistoryService.addCity(cityName);
