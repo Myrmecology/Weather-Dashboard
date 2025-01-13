@@ -1,54 +1,61 @@
 import { Router } from 'express';
+import HistoryService from '../../service/historyService';
+import WeatherService from '../../service/weatherService';
+
 const router = Router();
 
-import HistoryService from '../../service/historyService.js';
-import WeatherService from '../../service/weatherService.js';
-
-// TODO: POST Request with city name to retrieve weather data
+// POST request to retrieve weather data based on city name
 router.post('/', async (req, res) => {
   const { cityName } = req.body;
-  console.log("POST route", req.body, cityName)
 
-  // TODO: GET weather data from city name
-
-  try {
-    // Use the WeatherService to get the weather data
-    const weatherData = await WeatherService.getWeatherForCity(cityName);
-    res.json(weatherData); // Send weather data back in response
-  } catch (error) {
-    console.error('Error fetching weather data:', error);
-    res.status(500).send({ error: 'Failed to fetch weather data' });
+  // Validate that the city name is provided
+  if (!cityName) {
+    return res.status(400).json({ error: "City name is required" });
   }
 
-  // TODO: save city to search history
   try {
+    // Fetch weather data for the city
+    const weatherData = await WeatherService.getWeatherForCity(cityName);
+
+    // Save the city to search history
     await HistoryService.addCity(cityName);
+
+    // Send weather data back in response
+    return res.json(weatherData);
+
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).send({ error: 'Failed to add city to history' });
+    console.error('Error fetching weather data or saving city to history:', error);
+    // If the error is related to the weather service, respond with an error fetching weather data
+    if (error.message === 'Coordinates could not be retrieved') {
+      return res.status(400).json({ error: 'Invalid city name or failed to fetch weather data' });
+    }
+
+    // For other types of errors, respond with a general server error
+    return res.status(500).json({ error: 'Failed to process the request' });
   }
 });
 
-// TODO: GET search history
+// GET request to fetch search history
 router.get('/history', async (_req, res) => {
   try {
     const cities = await HistoryService.getCities();
-    res.json(cities);
+    return res.json(cities); // Send the history of cities as response
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).send({ error: 'Failed to fetch cities from history' });
+    console.error('Error fetching cities from history:', error);
+    return res.status(500).json({ error: 'Failed to fetch cities from history' });
   }
 });
 
-// * BONUS TODO: DELETE city from search history
+// DELETE request to remove a city from search history by ID
 router.delete('/history/:id', async (req, res) => {
   const { id } = req.params;
+
   try {
     await HistoryService.removeCity(id);
-    res.status(204).send(); // No content to return on successful delete
+    return res.status(204).send(); // No content to return on successful delete
   } catch (error) {
     console.error('Error removing city from history:', error);
-    res.status(500).send({ error: 'Failed to remove city from history' });
+    return res.status(500).json({ error: 'Failed to remove city from history' });
   }
 });
 
