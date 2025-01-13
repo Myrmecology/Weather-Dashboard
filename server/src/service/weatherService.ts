@@ -38,8 +38,8 @@ class Weather {
 
 // WeatherService Class
 class WeatherService {
-  private baseUrl = process.env.API_BASE_URL || 'https://api.openweathermap.org'; 
-  private apiKey = process.env.API_KEY || ''; 
+  private baseUrl = process.env.API_BASE_URL || 'https://api.openweathermap.org'; // Default value if missing in env
+  private apiKey = process.env.API_KEY || ''; // Default empty if API_KEY not found in env
   private cityName!: string;
 
   // Fetch location data from geocode API
@@ -47,7 +47,6 @@ class WeatherService {
     try {
       const response = await fetch(query);
       const data = await response.json();
-      console.log('Location Data:', data);
       return data;
     } catch (error) {
       console.error('Error fetching location data:', error);
@@ -55,32 +54,35 @@ class WeatherService {
     }
   }
 
-  // Destructure the location data into coordinates
+  // Destructure location data into coordinates
   private destructureLocationData(locationData: any): Coordinates | null {
     if (locationData && locationData.lat && locationData.lon) {
       return {
         lat: locationData.lat,
-        lon: locationData.lon
+        lon: locationData.lon,
       };
     }
     return null;
   }
 
+  // Build geocode query string
   private buildGeocodeQuery(): string {
     return `${this.baseUrl}/geo/1.0/direct?q=${this.cityName}&limit=1&appid=${this.apiKey}`;
   }
 
+  // Build weather query string based on coordinates
   private buildWeatherQuery(coordinates: Coordinates): string {
     return `${this.baseUrl}/data/2.5/forecast?lat=${coordinates.lat}&lon=${coordinates.lon}&appid=${this.apiKey}`;
   }
 
+  // Fetch location and destructure coordinates
   private async fetchAndDestructureLocationData() {
     const locationData = await this.fetchLocationData(this.buildGeocodeQuery());
     if (Array.isArray(locationData) && locationData.length > 0) {
       return this.destructureLocationData(locationData[0]);
     } else {
       console.error('No location data found');
-      return null;
+      return null; // Return null if no data
     }
   }
 
@@ -109,7 +111,22 @@ class WeatherService {
     return new Weather(city, date, icon, iconDescription, tempF, windSpeed, humidity);
   }
 
-  // Helper to parse weather data for a specific day
+  // Build forecast array from the weather data
+  private buildForecastArray(weatherData: any): Weather[] {
+    const forecastArray: Weather[] = []; // Explicitly type as Weather[]
+
+    // OpenWeather API returns 3-hour intervals, so we pick the relevant data points (e.g., 12:00 PM of each day)
+    const forecastTimes = [0, 8, 16, 24, 32]; // These indices correspond to a 5-day forecast at intervals
+
+    forecastTimes.forEach((index) => {
+      const weatherForDay = this.parseWeatherDataForDay(weatherData, index);
+      forecastArray.push(weatherForDay);
+    });
+
+    return forecastArray;
+  }
+
+  // Parse weather data for a single day
   private parseWeatherDataForDay(weatherData: any, index: number): Weather {
     const dayData = weatherData.list[index];
     const city = this.cityName;
@@ -123,22 +140,12 @@ class WeatherService {
     return new Weather(city, date, icon, iconDescription, tempF, windSpeed, humidity);
   }
 
-  private buildForecastArray(weatherData: any): Weather[] {
-    const forecastArray: Weather[] = [];
-    const forecastTimes = [0, 8, 16, 24, 32]; // Indices to fetch for the 5-day forecast
-
-    forecastTimes.forEach((index) => {
-      const weatherForDay = this.parseWeatherDataForDay(weatherData, index);
-      forecastArray.push(weatherForDay);
-    });
-
-    return forecastArray;
-  }
-
+  // Convert temperature from Kelvin to Fahrenheit
   private kelvinToFahrenheit(kelvin: number): number {
-    return ((kelvin - 273.15) * 9) / 5 + 32;
+    return ((kelvin - 273.15) * 9) / 5 + 32; // Kelvin to Fahrenheit formula
   }
 
+  // Get weather for the specified city
   async getWeatherForCity(city: string) {
     this.cityName = city;
     const coordinates = await this.fetchAndDestructureLocationData();
