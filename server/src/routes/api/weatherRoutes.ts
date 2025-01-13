@@ -1,21 +1,20 @@
 import { Router } from 'express';
-import HistoryService from '../../service/historyService';  // Ensure HistoryService is imported
-import WeatherService from '../../service/weatherService';  // Ensure WeatherService is imported
+import HistoryService from '../../service/historyService';
+import WeatherService from '../../service/weatherService';
 
 const router = Router();
 
-// POST Request with city name to retrieve weather data
+// POST request to retrieve weather data based on city name
 router.post('/', async (req, res) => {
   const { cityName } = req.body;
   console.log("POST route", req.body, cityName);
 
-  // Fetch weather data for the city
   try {
+    // Fetch weather data for the city
     const weatherData = await WeatherService.getWeatherForCity(cityName);
-    // Send weather data back as a JSON response
-    return res.json(weatherData);
+    return res.json(weatherData); // Send weather data back in response
   } catch (error) {
-    if (error instanceof Error) {
+    if (error instanceof Error) { // Check if error is an instance of Error
       console.error('Error fetching weather data:', error.message);
       return res.status(500).send({ error: 'Failed to fetch weather data' });
     } else {
@@ -24,16 +23,16 @@ router.post('/', async (req, res) => {
     }
   }
 
-  // Save city to search history
   try {
+    // Save the city to search history
     await HistoryService.addCity(cityName);
   } catch (error) {
-    if (error instanceof Error) {
-      console.error('Error adding city to history:', error.message);
+    if (error instanceof Error) { // Check if error is an instance of Error
+      console.error('Error:', error.message);
       return res.status(500).send({ error: 'Failed to add city to history' });
     } else {
       console.error('Unexpected error:', error);
-      return res.status(500).send({ error: 'Unexpected error occurred while adding city to history' });
+      return res.status(500).send({ error: 'Unexpected error occurred' });
     }
   }
 });
@@ -42,15 +41,14 @@ router.post('/', async (req, res) => {
 router.get('/history', async (_req, res) => {
   try {
     const cities = await HistoryService.getCities();
-    // Send the history of cities as a response
-    return res.json(cities);
+    return res.json(cities); // Send the history of cities as response
   } catch (error) {
-    if (error instanceof Error) {
+    if (error instanceof Error) { // Check if error is an instance of Error
       console.error('Error fetching cities from history:', error.message);
       return res.status(500).send({ error: 'Failed to fetch cities from history' });
     } else {
       console.error('Unexpected error:', error);
-      return res.status(500).send({ error: 'Unexpected error occurred while fetching cities from history' });
+      return res.status(500).send({ error: 'Unexpected error occurred' });
     }
   }
 });
@@ -60,15 +58,14 @@ router.delete('/history/:id', async (req, res) => {
   const { id } = req.params;
   try {
     await HistoryService.removeCity(id);
-    // Respond with status 204 (No content) on successful delete
-    return res.status(204).send();
+    return res.status(204).send(); // No content to return on successful delete
   } catch (error) {
-    if (error instanceof Error) {
+    if (error instanceof Error) { // Check if error is an instance of Error
       console.error('Error removing city from history:', error.message);
       return res.status(500).send({ error: 'Failed to remove city from history' });
     } else {
       console.error('Unexpected error:', error);
-      return res.status(500).send({ error: 'Unexpected error occurred while removing city from history' });
+      return res.status(500).send({ error: 'Unexpected error occurred' });
     }
   }
 });
