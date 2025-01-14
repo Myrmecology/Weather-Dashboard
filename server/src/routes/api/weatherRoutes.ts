@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import HistoryService from '../../service/historyService';
-import WeatherService from '../../service/weatherService';
+import HistoryService from '../../service/historyService.js';
+import WeatherService from '../../service/weatherService.js';
 
 const router = Router();
 
@@ -28,7 +28,7 @@ router.post('/', async (req, res) => {
     await HistoryService.addCity(cityName);
   } catch (error) {
     if (error instanceof Error) { // Check if error is an instance of Error
-      console.error('Error:', error.message);
+      console.error('Error:', error);
       return res.status(500).send({ error: 'Failed to add city to history' });
     } else {
       console.error('Unexpected error:', error);

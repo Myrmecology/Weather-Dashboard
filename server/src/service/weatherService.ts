@@ -67,12 +67,12 @@ class WeatherService {
 
   // Build geocode query string
   private buildGeocodeQuery(): string {
-    return `${this.baseUrl}/geo/1.0/direct?q=${this.cityName}&limit=1&appid=${this.apiKey}`;
+    return `${this.baseUrl}/geo/1.0/direct?q=${this.cityName}&limit=1&appid=${this.apiKey}&units=imperial`;
   }
 
   // Build weather query string based on coordinates
   private buildWeatherQuery(coordinates: Coordinates): string {
-    return `${this.baseUrl}/data/2.5/forecast?lat=${coordinates.lat}&lon=${coordinates.lon}&appid=${this.apiKey}`;
+    return `${this.baseUrl}/data/2.5/forecast?lat=${coordinates.lat}&lon=${coordinates.lon}&appid=${this.apiKey}&units=imperial`;
   }
 
   // Fetch location and destructure coordinates
@@ -104,7 +104,7 @@ class WeatherService {
     const date = new Date(response.list[0].dt * 1000).toLocaleDateString();
     const icon = response.list[0].weather[0].icon;
     const iconDescription = response.list[0].weather[0].description;
-    const tempF = this.kelvinToFahrenheit(response.list[0].main.temp);
+    const tempF = response.list[0].main.temp;
     const windSpeed = response.list[0].wind.speed;
     const humidity = response.list[0].main.humidity;
 
@@ -133,18 +133,15 @@ class WeatherService {
     const date = new Date(dayData.dt * 1000).toLocaleDateString();
     const icon = dayData.weather[0].icon;
     const iconDescription = dayData.weather[0].description;
-    const tempF = this.kelvinToFahrenheit(dayData.main.temp);
+    const tempF = dayData.main.temp;
     const windSpeed = dayData.wind.speed;
     const humidity = dayData.main.humidity;
 
     return new Weather(city, date, icon, iconDescription, tempF, windSpeed, humidity);
   }
 
-  // Convert temperature from Kelvin to Fahrenheit
-  private kelvinToFahrenheit(kelvin: number): number {
-    return ((kelvin - 273.15) * 9) / 5 + 32; // Kelvin to Fahrenheit formula
-  }
-
+  
+  
   // Get weather for the specified city
   async getWeatherForCity(city: string) {
     this.cityName = city;
